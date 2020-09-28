@@ -3,9 +3,13 @@ Please note that what this mean is that you are creating a
 list of operations, then the exectution of these is done
 only when the resutls are required
 
-To build this you need to add -fcoroutines-ts
-Please note that as of c++17 this is not supported as part of the language, but 
-it is supported on clag 5 and above (using the above compilation flag
+To build this:
+you need to add "-fcoroutines-ts std=c++20 -stdlib=libc++" on clang 
+and "-fcoroutines -std=c++2a" on gcc
+Please note that as of c++17 this is not supported as part of the language. You must use c++ compile that support this (such as g++ 10).
+The is because the interfaces for coroutines is changing and I no longer trying to backward support it.
+If you are running at http://godbolt.org/ please select gcc 10 or clag 10 (this still do not support standard coroutines). In the clang case you should
+not add -fcoroutines
 ```c++
 #include <iostream>
 //#include "async/algorithm.hpp"
@@ -35,7 +39,7 @@ auto produce_array = [] (int start, int step, std::size_t size) {
 };
 
 int main() {
-	using namespace async;
+  using namespace async;
   auto s{sequence<double>(21.4, 3.3)}; 
   auto t{take_until(s, 220)}; 
   auto m{multiply(t, 2.0)};
