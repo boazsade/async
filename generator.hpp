@@ -1,27 +1,35 @@
 #pragma once
-#include <coroutine>
+#if defined(__clang__)  // make sure to add -stdlib=libc++
+#   include <experimental/coroutine>
+#   define std_ns std::experimental
+#else
+#   include <coroutine>
+#   define std_ns std
+#endif  // __clang__
 #include <stdexcept>
 
 namespace async
 {
+//namespace stdx = std::experimental;
 
-template <typename T> struct generator {
+template <typename T> 
+struct generator {
     struct promise_type {
             T current_value;
-            std::suspend_always yield_value(T value) {
+            std_ns::suspend_always yield_value(T value) {
             this->current_value = value;
             return {};
         }
-        
-        void return_value(T val) {
-            this->current_value = std::move(val);
-        }
 
-        std::suspend_always initial_suspend() { 
+        std_ns::suspend_always initial_suspend() { 
             return {}; 
         }
 
-        std::suspend_always final_suspend() { 
+        void return_value(T val) {
+            this->current_value = val;
+        }
+
+        std_ns::suspend_always final_suspend() { 
             return {}; 
         }
 
@@ -33,16 +41,16 @@ template <typename T> struct generator {
             throw std::runtime_error{"unhandle exception"};
         }
 
-        void return_void() {
+        void RETURN_VALUE() {
         }
     };
 
   struct iterator {
-    std::coroutine_handle<promise_type> _Coro;
-    bool _Done;
+    std_ns::coroutine_handle<promise_type> _Coro{};
+    bool _Done{true};
 
-    iterator(std::coroutine_handle<promise_type> coro, bool d) : 
-        _Coro{coro}, _Done{d} 
+    iterator(std_ns::coroutine_handle<promise_type> coro, bool d) : 
+        _Coro{coro}, _Done{d}
     {
     }
 
@@ -85,17 +93,18 @@ template <typename T> struct generator {
   }
 
   ~generator() {
-    if (p)
+    if (p) {
       p.destroy();
+    }
   }
 
 private:
   explicit generator(promise_type *p)
-      : p(std::coroutine_handle<promise_type>::from_promise(*p)) 
+      : p(std_ns::coroutine_handle<promise_type>::from_promise(*p)) 
   {
   }
 
-  std::coroutine_handle<promise_type> p;
+  std_ns::coroutine_handle<promise_type> p;
 };
 
 }   // end of namespace async
