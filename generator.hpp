@@ -1,24 +1,27 @@
 #pragma once
-#include "coroutine.hpp"
+#include <coroutine>
 #include <stdexcept>
 
 namespace async
 {
-namespace stdx = std::experimental;
 
 template <typename T> struct generator {
     struct promise_type {
             T current_value;
-            stdx::suspend_always yield_value(T value) {
+            std::suspend_always yield_value(T value) {
             this->current_value = value;
             return {};
         }
+        
+        void return_value(T val) {
+            this->current_value = std::move(val);
+        }
 
-        stdx::suspend_always initial_suspend() { 
+        std::suspend_always initial_suspend() { 
             return {}; 
         }
 
-        stdx::suspend_always final_suspend() { 
+        std::suspend_always final_suspend() { 
             return {}; 
         }
 
@@ -35,10 +38,10 @@ template <typename T> struct generator {
     };
 
   struct iterator {
-    stdx::coroutine_handle<promise_type> _Coro;
+    std::coroutine_handle<promise_type> _Coro;
     bool _Done;
 
-    iterator(stdx::coroutine_handle<promise_type> coro, bool d) : 
+    iterator(std::coroutine_handle<promise_type> coro, bool d) : 
         _Coro{coro}, _Done{d} 
     {
     }
@@ -88,11 +91,11 @@ template <typename T> struct generator {
 
 private:
   explicit generator(promise_type *p)
-      : p(stdx::coroutine_handle<promise_type>::from_promise(*p)) 
+      : p(std::coroutine_handle<promise_type>::from_promise(*p)) 
   {
   }
 
-  stdx::coroutine_handle<promise_type> p;
+  std::coroutine_handle<promise_type> p;
 };
 
 }   // end of namespace async
